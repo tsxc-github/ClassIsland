@@ -60,6 +60,7 @@
       </PackageReference>
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="AudioSwitcher.AudioApi.CoreAudio" Version="3.0.3" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
         <PackageReference Include="Downloader" Version="3.0.6" />
         <PackageReference Include="EPPlus" Version="7.0.8" />

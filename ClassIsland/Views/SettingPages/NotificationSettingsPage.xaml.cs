@@ -24,9 +24,12 @@ using ClassIsland.ViewModels.SettingsPages;
 using MaterialDesignThemes.Wpf;
 using System.Diagnostics;
 using ClassIsland.Core.Enums.SettingsWindow;
+using ClassIsland.Helpers;
 using ClassIsland.Models;
 using ClassIsland.Shared.Helpers;
 using CommunityToolkit.Mvvm.Input;
+using NAudio.CoreAudioApi;
+using NAudio.Wave;
 
 namespace ClassIsland.Views.SettingPages;
 
@@ -289,4 +292,21 @@ public partial class NotificationSettingsPage : SettingsPageBase
     {
         SettingsService.Settings.PropertyChanged -= Settings_PropertyChanged;
     }
+
+    public Dictionary<Guid, string>OutDevicesList
+    {
+        get => AudioDevicesHelper.GetPlaybackDevices();
+    }
+
+
+
+    public Guid OutDevice
+    {
+        get => SettingsService.Settings.NotificationForceAudioSettingDevice;
+        set
+        {
+            SettingsService.Settings.NotificationForceAudioSettingDevice=value;
+        }
+    }
 }
+

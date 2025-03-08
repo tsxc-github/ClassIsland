@@ -22,6 +22,7 @@ using ClassIsland.Core;
 using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Core.Abstractions.Services.Management;
 using ClassIsland.Core.Helpers.Native;
+using ClassIsland.Helpers;
 using ClassIsland.Models;
 using ClassIsland.Models.EventArgs;
 using ClassIsland.Shared.Abstraction.Models;
@@ -50,6 +51,8 @@ using ProgressBar = System.Windows.Controls.ProgressBar;
 using WindowChrome = System.Windows.Shell.WindowChrome;
 using ClassIsland.Services.Management;
 using Point = System.Windows.Point;
+using NAudio.CoreAudioApi;
+
 
 
 #if DEBUG
@@ -126,7 +129,7 @@ public partial class MainWindow : Window
     private Stopwatch RawInputUpdateStopWatch { get; } = new();
 
     public ClassChangingWindow? ClassChangingWindow { get; set; }
-    
+
     private IUriNavigationService UriNavigationService { get; }
     public IRulesetService RulesetService { get; }
     public IWindowRuleService WindowRuleService { get; }
@@ -157,12 +160,12 @@ public partial class MainWindow : Window
         set { SetValue(NotificationProgressBarValueProperty, value); }
     }
 
-    public MainWindow(SettingsService settingsService, 
+    public MainWindow(SettingsService settingsService,
         IProfileService profileService,
-        INotificationHostService notificationHostService, 
+        INotificationHostService notificationHostService,
         ITaskBarIconService taskBarIconService,
-        IThemeService themeService, 
-        ILogger<MainWindow> logger, 
+        IThemeService themeService,
+        ILogger<MainWindow> logger,
         ISpeechService speechService,
         IExactTimeService exactTimeService,
         TopmostEffectWindow topmostEffectWindow,
@@ -306,8 +309,8 @@ public partial class MainWindow : Window
     public Point GetCenter()
     {
         GetCurrentDpi(out var dpi, out _);
-        
-        if (VisualTreeUtils.FindChildVisualByName<Grid>(this, "PART_GridWrapper") is not { } gridWrapper) 
+
+        if (VisualTreeUtils.FindChildVisualByName<Grid>(this, "PART_GridWrapper") is not { } gridWrapper)
             return new Point(0, 0);
         var p = gridWrapper.TranslatePoint(new Point(gridWrapper.ActualWidth / 2, gridWrapper.ActualHeight / 2), this);
         p.Y = Top + (ActualHeight / 2);
@@ -336,7 +339,6 @@ public partial class MainWindow : Window
 
         while (NotificationHostService.RequestQueue.Count > 0)
         {
-            using var player = new DirectSoundOut();
             var request = ViewModel.CurrentNotificationRequest = NotificationHostService.GetRequest();  // 获取当前的通知请求
             var settings = ViewModel.Settings as INotificationSettings;
             foreach (var i in new List<NotificationSettings>([request.ProviderSettings, request.RequestNotificationSettings]).Where(i => i.IsSettingsEnabled))
@@ -388,8 +390,52 @@ public partial class MainWindow : Window
                         {
                             Volume = (float)SettingsService.Settings.NotificationSoundVolume
                         };
+                        var player = new WaveOutEvent();
+
+                        // 强制修改音频设置
+                        double lastVolume=-1;
+                        Guid device=Guid.Empty;
+                        if (settings.IsNotificationForceAudioSettingEnabled)
+                        {
+                            if(settings.IsNotificationForceAudioSettingDeviceEnabled)
+                            {
+                                //TODO
+                                //player.DeviceNumber = AudioDevicesHelper.GetDeviceNumberById(settings.NotificationForceAudioSettingDevice);
+                                if (settings.IsNotificationForceAudioSettingDefaultDeviceEnabled)
+                                {
+                                    AudioDevicesHelper.SetDefaultDevice(settings.NotificationForceAudioSettingDevice);
+                                }
+                            }
+
+                            if (settings.IsNotificationForceAudioSettingVolumeEnabled)
+                            {
+                                device = settings.IsNotificationForceAudioSettingDeviceEnabled
+                                    ? settings.NotificationForceAudioSettingDevice
+                                    : AudioDevicesHelper.GetDefaultDeviceId();
+                                if(settings.IsNotificationForceAudioSettingVolumeAutoUndoEnabled)
+                                    lastVolume=AudioDevicesHelper.GetDeviceVolume(device);
+                                AudioDevicesHelper.SetDeviceVolume(device,settings.NotificationForceAudioSettingVolume);
+                            }
+                        }
+
+
                         player.Init(volume);
                         player.Play();
+
+                        await Task.Run(() =>
+                        {
+                            while (player.PlaybackState == PlaybackState.Playing)
+                            {
+                            }
+                            if (lastVolume != -1)
+                            {
+                                if (device == Guid.Empty)
+                                {
+                                    Logger.LogError(new Exception("不预期的未初始化。"), "无法还原音量。");
+                                }
+                                AudioDevicesHelper.SetDeviceVolume(device,lastVolume);
+                            }
+                        });
                     }
                     catch (Exception e)
                     {
@@ -544,7 +590,7 @@ public partial class MainWindow : Window
                 // ignored
             }
         }
-        
+
         base.OnContentRendered(e);
 #if DEBUG
         MemoryProfiler.GetSnapshot("MainWindow OnContentRendered");
@@ -939,7 +985,7 @@ public partial class MainWindow : Window
         ViewModel.GridRootTop = Height / 10 * (scale - 1);
 
         var screen = ViewModel.Settings.WindowDockingMonitorIndex < Screen.AllScreens.Length  && ViewModel.Settings.WindowDockingMonitorIndex >= 0
-            ? Screen.AllScreens[ViewModel.Settings.WindowDockingMonitorIndex] 
+            ? Screen.AllScreens[ViewModel.Settings.WindowDockingMonitorIndex]
             : Screen.PrimaryScreen;
         if (screen == null)
             return;
@@ -999,7 +1045,7 @@ public partial class MainWindow : Window
         try
         {
             var source = PresentationSource.FromVisual(realVisual);
-            if (source?.CompositionTarget == null) 
+            if (source?.CompositionTarget == null)
                 return;
             _latestDpiX = dpiX = 1.0 * source.CompositionTarget.TransformToDevice.M11;
             _latestDpiY = dpiY = 1.0 * source.CompositionTarget.TransformToDevice.M22;
@@ -1155,7 +1201,7 @@ public partial class MainWindow : Window
         var m = e.NewSize.Width > BackgroundWidth;
         var s = ViewModel.Settings.DebugAnimationScale;
         var t = m ? 600 * s : 800 * s;
-        var da = new DoubleAnimation()  
+        var da = new DoubleAnimation()
         {
             From = BackgroundWidth,
             To = e.NewSize.Width,

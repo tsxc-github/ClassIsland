@@ -15,6 +15,13 @@ public class NotificationSettings : ObservableRecipient, INotificationSettings
     private string _notificationSoundPath = "";
     private bool _isSettingsEnabled = false;
     private bool _isNotificationTopmostEnabled = false;
+    private bool _isNotificationForceAudioSettingEnabled = false;
+    private bool _isNotificationForceAudioSettingVolumeEnabled = false;
+    private double _notificationForceAudioSettingVolume = 0.5;
+    private bool _isNotificationForceAudioSettingVolumeAutoUndoEnabled = false;
+    private bool _isNotificationForceAudioSettingDeviceEnabled = false;
+    private bool _isNotificationForceAudioSettingDefaultDeviceEnabled = false;
+    private Guid _notificationForceAudioSettingDevice = Guid.Empty;
 
     /// <summary>
     /// 是否启用提醒
@@ -96,6 +103,101 @@ public class NotificationSettings : ObservableRecipient, INotificationSettings
         {
             if (value == _isNotificationTopmostEnabled) return;
             _isNotificationTopmostEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// 是否在提醒时强制修改音频设置
+    /// </summary>
+    public bool IsNotificationForceAudioSettingEnabled
+    {
+        get => _isNotificationForceAudioSettingEnabled;
+        set
+        {
+            if (value == _isNotificationForceAudioSettingEnabled) return;
+            _isNotificationForceAudioSettingEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// 是否在提醒时强制修改音频设置-音量
+    /// </summary>
+    public bool IsNotificationForceAudioSettingVolumeEnabled
+    {
+        get => _isNotificationForceAudioSettingVolumeEnabled;
+        set
+        {
+            if (value == _isNotificationForceAudioSettingVolumeEnabled) return;
+            _isNotificationForceAudioSettingVolumeEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// 在提醒时强制修改音频设置-音量大小
+    /// </summary>
+    public double NotificationForceAudioSettingVolume
+    {
+        get => _notificationForceAudioSettingVolume;
+        set
+        {
+            if (value.Equals(_notificationForceAudioSettingVolume)) return;
+            _notificationForceAudioSettingVolume = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// 在提醒时强制修改音频设置-自动恢复音量
+    /// </summary>
+    public bool IsNotificationForceAudioSettingVolumeAutoUndoEnabled
+    {
+        get => _isNotificationForceAudioSettingVolumeAutoUndoEnabled;
+        set
+        {
+            if (value == _isNotificationForceAudioSettingVolumeAutoUndoEnabled) return;
+            _isNotificationForceAudioSettingVolumeAutoUndoEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+    /// <summary>
+    /// 在提醒时强制修改音频设置-是否更改设备
+    /// </summary>
+    public bool IsNotificationForceAudioSettingDeviceEnabled
+    {
+        get => _isNotificationForceAudioSettingDeviceEnabled;
+        set
+        {
+            if (value.Equals(_isNotificationForceAudioSettingDeviceEnabled)) return;
+            _isNotificationForceAudioSettingDeviceEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+    /// <summary>
+    /// 在提醒时强制修改音频设置-是否更改默认设备
+    /// </summary>
+    public bool IsNotificationForceAudioSettingDefaultDeviceEnabled
+    {
+        get => _isNotificationForceAudioSettingDefaultDeviceEnabled;
+        set
+        {
+            if (value.Equals(_isNotificationForceAudioSettingDefaultDeviceEnabled)) return;
+            _isNotificationForceAudioSettingDefaultDeviceEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+    /// <summary>
+    /// 在提醒时强制修改音频设置-设备
+    /// </summary>
+    public Guid NotificationForceAudioSettingDevice
+    {
+        get => _notificationForceAudioSettingDevice;
+        set
+        {
+            if (value.Equals(_notificationForceAudioSettingDevice)) return;
+            _notificationForceAudioSettingDevice = value;
             OnPropertyChanged();
         }
     }

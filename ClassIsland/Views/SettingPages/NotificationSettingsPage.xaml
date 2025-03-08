@@ -23,9 +23,7 @@
                            TextElement.FontSize="14"
                            TextOptions.TextFormattingMode="Ideal"
                            TextOptions.TextRenderingMode="Auto"
-                           d:DataContext="{d:DesignInstance local:NotificationSettingsPage}"
-                           Loaded="NotificationSettingsPage_OnLoaded"
-                           Unloaded="NotificationSettingsPage_OnUnloaded">
+                           d:DataContext="{d:DesignInstance local:NotificationSettingsPage}">
 
     <controls:SettingsPageBase.Resources>
         <converters:GuidToNotificationProviderConverter x:Key="GuidToNotificationProviderConverter" />
@@ -78,7 +76,7 @@
                                             ToolTip="加载"
                                             Command="{Binding Data.LoadGptSoVitsPresetCommand, Source={StaticResource BindingProxy}}"
                                             CommandParameter="{Binding}"/>
-                                    
+
                                     <Button Style="{StaticResource MaterialDesignToolForegroundButton}"
                                             Content="{materialDesign:PackIcon Upload}"
                                             Margin="0 -8"
@@ -190,13 +188,13 @@
                                                           VerticalAlignment="Center"
                                                           ClipToBounds="True" Margin="6"
                                                           Content="{Binding ProviderInstance.IconElement}" />
-                                        
+
                                         <!-- 标题 -->
                                         <TextBlock Grid.Column="1" Grid.Row="0"
                                                    TextWrapping="Wrap"
                                                    Text="{Binding Name}"
                                                    FontSize="16" FontWeight="Bold" />
-                                        
+
                                         <!-- 描述 -->
                                         <TextBlock Grid.Column="1" Grid.Row="1"
                                                    TextWrapping="Wrap"
@@ -211,7 +209,7 @@
                     <TabItem Header="高级设置">
                         <ScrollViewer Background="{DynamicResource MaterialDesignPaper}">
                             <StackPanel Margin="0 0 0 8">
-                                
+
                                 <!-- 启用提醒语音 -->
                                 <materialDesign:Card>
                                     <Expander Background="Transparent"
@@ -348,7 +346,7 @@
                                                          Margin="0 4 0 0" 
                                                          Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                                          materialDesign:HintAssist.Hint="参考音频路径"/>
-                                                    
+
                                                 <!-- 参考音频语言 -->
                                                 <TextBox Text="{Binding SettingsService.Settings.GptSoVitsSpeechSettings.GptSoVitsPromptLang, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                                          Margin="0 4 0 0" 
@@ -381,7 +379,8 @@
                                                             Margin="0 4 0 0"
                                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                                             materialDesign:HintAssist.Hint="并发数" />
-                                                    </StackPanel></Expander>
+                                                    </StackPanel>
+                                                </Expander>
                                             </StackPanel>
                                             <!-- 语音音量 -->
                                             <TextBlock Grid.Row="3" Grid.Column="0" Text="语音音量"
@@ -399,7 +398,7 @@
                                                         AutoToolTipPrecision="2"
                                                         Width="150" />
                                             </StackPanel>
-                                            
+
                                             <!-- 测试朗读文本和测试语音功能 -->
                                             <TextBox Grid.Row="4" Grid.Column="0"
                                                      Grid.ColumnSpan="2"
@@ -447,7 +446,7 @@
                                             <CheckBox Content="默认启用"
                                                       IsChecked="{Binding SettingsService.Settings.IsNotificationEffectEnabled}"
                                                       Margin="0 0 0 6" />
-                                            
+
                                             <!-- 提醒特效渲染精度 -->
                                             <controls2:SettingsControl IconGlyph="LayersOutline" Header="提醒特效渲染精度"
                                                                        Margin="0 0 0 6"
@@ -499,11 +498,11 @@
                                                 <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
 
-                                            <!-- 默认启用 -->
+                                                <!-- 默认启用 -->
                                             <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" 
                                                       Content="默认启用"
                                                       IsChecked="{Binding SettingsService.Settings.IsNotificationSoundEnabled}"
-                                                      Margin="0 0 0 6" />
+                                                    Margin="0 0 0 6" />
 
                                             <!-- 音效音量 -->
                                             <TextBlock Grid.Row="1" Grid.Column="0"
@@ -539,7 +538,7 @@
                                                         <controls1:FileBrowserButton
                                                             CurrentPath="{Binding SettingsService.Settings.NotificationSoundPath, Mode=TwoWay}"
                                                             VerticalAlignment="Center" />
-                                                    </StackPanel>
+                                            </StackPanel>
                                                 </controls2:SettingsControl.Switcher>
                                             </controls2:SettingsControl>
                                         </Grid>
@@ -567,6 +566,79 @@
                                                       Margin="0 0 0 6" />
                                         </StackPanel>
                                     </Expander>
+                                </materialDesign:Card>
+                                <!-- 强制音频设置 -->
+                                <materialDesign:Card Margin="0 6 0 0">
+                                    <Expander Background="Transparent"
+              IsExpanded="{Binding SettingsService.Settings.AllowNotificationForceAudioSettingEnabled, Mode=OneWay}"
+              TextBlock.Foreground="{DynamicResource MaterialDesignBody}">
+                                        <Expander.Header>
+                                            <controls2:SettingsControl IconGlyph="VolumeHigh"
+                                       Margin="-12 0"
+                                       Foreground="{DynamicResource MaterialDesignBody}"
+                                       Header="强制音频设置"
+                                       Description="在发出通知时强制修改音频设置(在播放时会修改默认设备及设备的音量大小)"
+                                       IsOn="{Binding SettingsService.Settings.AllowNotificationForceAudioSettingEnabled, Mode=TwoWay}" />
+                                        </Expander.Header>
+
+                                        <Grid Margin="36 0 48 12"
+      IsEnabled="{Binding SettingsService.Settings.AllowNotificationForceAudioSettingEnabled}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <!-- 默认启用 -->
+                                            <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+              Content="默认启用"
+              IsChecked="{Binding SettingsService.Settings.IsNotificationForceAudioSettingEnabled}"
+            Margin="0 0 0 6" />
+
+                                            <!-- 音量大小 -->
+                                            <CheckBox Grid.Row="1" Grid.Column="0"
+  Content="音量大小"
+  IsChecked="{Binding SettingsService.Settings.IsNotificationForceAudioSettingVolumeEnabled}"
+Margin="0 0 0 6" />
+                                            <Slider Grid.Row="1" Grid.Column="1"
+            Value="{Binding SettingsService.Settings.NotificationForceAudioSettingVolume}"
+            Minimum="0" Maximum="1"
+            TickFrequency="0.01"
+            Margin="0 4 0 8"
+            Width="150"
+            AutoToolTipPlacement="BottomRight"
+            AutoToolTipPrecision="2"
+            IsSnapToTickEnabled="True"
+            />
+                                            <CheckBox Grid.Row="1" Grid.Column="2"
+  Content="自动复原"
+  IsChecked="{Binding SettingsService.Settings.IsNotificationForceAudioSettingVolumeAutoUndoEnabled}"
+Margin="0,0,0,6" />
+                                            <!-- 设备选择 -->
+                                            <CheckBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Content="设备选择"
+  IsChecked="{Binding SettingsService.Settings.IsNotificationForceAudioSettingDeviceEnabled}"
+Margin="0 0 0 6" >
+                                                
+                                            </CheckBox>
+                                            <ComboBox Grid.Row="2" Grid.Column="1"
+         DisplayMemberPath="Value" SelectedValuePath="Key" SelectedValue="{Binding OutDevice}" ItemsSource="{Binding OutDevicesList}">
+                                            </ComboBox>
+                                            <CheckBox Grid.Row="2" Grid.Column="2"
+  Content="更改默认"
+  IsChecked="{Binding SettingsService.Settings.IsNotificationForceAudioSettingDefaultDeviceEnabled}"
+Margin="0,0,0,6" />
+
+
+
+                                        </Grid>
+
+                                    </Expander>
+
                                 </materialDesign:Card>
                             </StackPanel>
                         </ScrollViewer>
@@ -626,14 +698,14 @@
                                             IsEnabled="{Binding ProviderSettings.IsSettingsEnabled}">
                                     <TextBlock Text="此处的设置将覆盖全局设置和提醒请求中要求的设置。" Margin="2 4"
                                                Visibility="{Binding ProviderSettings.IsSettingsEnabled, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    
+
                                     <!-- 启用提醒语音 -->
                                     <controls2:SettingsCard IconGlyph="TextToSpeech"
                                                             Foreground="{DynamicResource MaterialDesignBody}"
                                                             Header="启用提醒语音"
                                                             Description="在发出提醒时用语音播报提醒内容。"
                                                             IsOn="{Binding ProviderSettings.IsSpeechEnabled, Mode=TwoWay}" />
-                                    
+
                                     <!-- 启用提醒强调特效 -->
                                     <controls2:SettingsCard IconGlyph="LayersOutline"
                                                             Margin="0 6 0 0"
@@ -642,7 +714,7 @@
                                                             IsEnabled="{Binding SettingsService.Settings.IsCompatibleWindowTransparentEnabled, Converter={StaticResource InvertBooleanConverter}, RelativeSource={RelativeSource FindAncestor, AncestorType=local:NotificationSettingsPage}}"
                                                             Description="启用后，发出提醒时会播放全屏强调特效。"
                                                             IsOn="{Binding ProviderSettings.IsNotificationEffectEnabled, Mode=TwoWay}" />
-                                    
+
                                     <!-- 启用提醒音效 -->
                                     <materialDesign:Card Margin="0 6 0 0">
                                         <Expander Background="Transparent"
