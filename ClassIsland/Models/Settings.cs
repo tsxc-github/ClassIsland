@@ -160,6 +160,10 @@ public class Settings : ObservableRecipient, ILessonControlSettings, INotificati
     private bool _allowNotificationEffect = true;
     private bool _allowNotificationSound = false;
     private bool _allowNotificationTopmost = true;
+    private bool _allowNotificationForceAudioSettingEnabled = false;
+    private bool _isNotificationForceAudioSettingEnabled = false;
+    private bool _isNotificationForceAudioSettingVolumeEnabled = false;
+    private double _notificationForceAudioSettingVolume = 0.5;
     private string _updateArtifactHash = "";
     private ObservableCollection<string> _excludedWeatherAlerts = new();
     private string _currentComponentConfig = "Default";
@@ -1381,6 +1385,50 @@ public class Settings : ObservableRecipient, ILessonControlSettings, INotificati
         {
             if (value == _allowNotificationTopmost) return;
             _allowNotificationTopmost = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IsNotificationForceAudioSettingEnabled
+    {
+        get => _isNotificationForceAudioSettingEnabled;
+        set
+        {
+            if (value == _isNotificationForceAudioSettingEnabled) return;
+            _isNotificationForceAudioSettingEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool AllowNotificationForceAudioSettingEnabled
+    {
+        get => _allowNotificationForceAudioSettingEnabled;
+        set
+        {
+            if (value == _allowNotificationForceAudioSettingEnabled) return;
+            _allowNotificationForceAudioSettingEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IsNotificationForceAudioSettingVolumeEnabled
+    {
+        get => _isNotificationForceAudioSettingVolumeEnabled;
+        set
+        {
+            if (value == _isNotificationForceAudioSettingVolumeEnabled) return;
+            _isNotificationForceAudioSettingVolumeEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public double NotificationForceAudioSettingVolume
+    {
+        get => _notificationForceAudioSettingVolume;
+        set
+        {
+            if (value.Equals(_notificationForceAudioSettingVolume)) return;
+            _notificationForceAudioSettingVolume = value;
             OnPropertyChanged();
         }
     }

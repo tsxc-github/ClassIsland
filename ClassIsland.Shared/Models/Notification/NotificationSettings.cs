@@ -15,6 +15,9 @@ public class NotificationSettings : ObservableRecipient, INotificationSettings
     private string _notificationSoundPath = "";
     private bool _isSettingsEnabled = false;
     private bool _isNotificationTopmostEnabled = false;
+    private bool _isNotificationForceAudioSettingEnabled = false;
+    private bool _isNotificationForceAudioSettingVolumeEnabled = false;
+    private double _notificationForceAudioSettingVolume = 0.5;
 
     /// <summary>
     /// 是否启用提醒
@@ -96,6 +99,48 @@ public class NotificationSettings : ObservableRecipient, INotificationSettings
         {
             if (value == _isNotificationTopmostEnabled) return;
             _isNotificationTopmostEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// 是否在提醒时强制修改音频设置
+    /// </summary>
+    public bool IsNotificationForceAudioSettingEnabled
+    {
+        get => _isNotificationForceAudioSettingEnabled;
+        set
+        {
+            if (value == _isNotificationForceAudioSettingEnabled) return;
+            _isNotificationForceAudioSettingEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// 是否在提醒时强制修改音频设置-音量
+    /// </summary>
+    public bool IsNotificationForceAudioSettingVolumeEnabled
+    {
+        get => _isNotificationForceAudioSettingVolumeEnabled;
+        set
+        {
+            if (value == _isNotificationForceAudioSettingVolumeEnabled) return;
+            _isNotificationForceAudioSettingVolumeEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// 在提醒时强制修改音频设置-音量大小
+    /// </summary>
+    public double NotificationForceAudioSettingVolume
+    {
+        get => _notificationForceAudioSettingVolume;
+        set
+        {
+            if (value.Equals(_notificationForceAudioSettingVolume)) return;
+            _notificationForceAudioSettingVolume = value;
             OnPropertyChanged();
         }
     }

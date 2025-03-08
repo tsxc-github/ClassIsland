@@ -58,4 +58,31 @@ public interface INotificationSettings
         get;
         set;
     }
+
+    /// <summary>
+    /// 是否在提醒时强制修改音频设置
+    /// </summary>
+    public bool IsNotificationForceAudioSettingEnabled
+    {
+        get;
+        set;
+    }
+
+    /// <summary>
+    /// 是否在提醒时强制修改音频设置-音量
+    /// </summary>
+    public bool IsNotificationForceAudioSettingVolumeEnabled
+    {
+        get;
+        set;
+    }
+
+    /// <summary>
+    /// 在提醒时强制修改音频设置-音量大小
+    /// </summary>
+    public double NotificationForceAudioSettingVolume
+    {
+        get;
+        set;
+    }
 }

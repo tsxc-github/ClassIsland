@@ -50,6 +50,8 @@ using ProgressBar = System.Windows.Controls.ProgressBar;
 using WindowChrome = System.Windows.Shell.WindowChrome;
 using ClassIsland.Services.Management;
 using Point = System.Windows.Point;
+using NAudio.CoreAudioApi;
+
 
 
 #if DEBUG
@@ -378,6 +380,23 @@ public partial class MainWindow : Window
                 // 播放提醒音效
                 if (settings.IsNotificationSoundEnabled && ViewModel.Settings.AllowNotificationSound)
                 {
+                    // 强制修改音量
+                    if (settings.IsNotificationForceAudioSettingEnabled&&settings.IsNotificationForceAudioSettingVolumeEnabled)
+                    {
+                        try
+                        {
+                            var enumerator = new MMDeviceEnumerator();
+                            var device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+                            var audioEndpointVolume = device.AudioEndpointVolume;
+                            audioEndpointVolume.MasterVolumeLevelScalar = (float)settings.NotificationForceAudioSettingVolume;
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.LogError(e, "无法修改音量");
+                        }
+                    }
+
+                    // 播放
                     try
                     {
                         var provider = string.IsNullOrWhiteSpace(settings.NotificationSoundPath)
