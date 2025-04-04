@@ -293,14 +293,14 @@ public partial class NotificationSettingsPage : SettingsPageBase
         SettingsService.Settings.PropertyChanged -= Settings_PropertyChanged;
     }
 
-    public Dictionary<Guid, string>OutDevicesList
+    public Dictionary<string, string>OutDevicesList
     {
-        get => AudioDevicesHelper.GetPlaybackDevices();
+        get => AudioDevicesHelper.GetNameOfPlaybackDevices();
     }
 
 
 
-    public Guid OutDevice
+    public string OutDevice
     {
         get => SettingsService.Settings.NotificationForceAudioSettingDevice;
         set

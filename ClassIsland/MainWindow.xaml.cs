@@ -41,18 +41,18 @@ using H.NotifyIcon;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 
-using NAudio.Wave;
 using Sentry;
 using Application = System.Windows.Application;
 using Window = System.Windows.Window;
-using NAudio.Wave.SampleProviders;
 using Linearstar.Windows.RawInput;
 using ProgressBar = System.Windows.Controls.ProgressBar;
 using WindowChrome = System.Windows.Shell.WindowChrome;
 using ClassIsland.Services.Management;
+using CSCore;
+using CSCore.Codecs;
+using CSCore.SoundOut;
 using Point = System.Windows.Point;
-using NAudio.CoreAudioApi;
-
+using PlaybackState = CSCore.SoundOut.PlaybackState;
 
 
 #if DEBUG
@@ -382,25 +382,32 @@ public partial class MainWindow : Window
                 {
                     try
                     {
-                        var provider = string.IsNullOrWhiteSpace(settings.NotificationSoundPath)
-                            ? new StreamMediaFoundationReader(
-                                Application.GetResourceStream(INotificationProvider.DefaultNotificationSoundUri)!.Stream).ToSampleProvider()
-                            : new AudioFileReader(settings.NotificationSoundPath);
-                        var volume = new VolumeSampleProvider(provider)
+                        var player = new WasapiOut();
+                        IWaveSource audio;
+                        if(string.IsNullOrWhiteSpace(settings.NotificationSoundPath))
                         {
-                            Volume = (float)SettingsService.Settings.NotificationSoundVolume
-                        };
-                        var player = new WaveOutEvent();
+                            audio = CodecFactory.Instance.GetCodec(INotificationProvider.DefaultNotificationSoundUri)
+                                .ToSampleSource()
+                                .ToMono()
+                                .ToWaveSource();
+                        }
+                        else
+                        {
+                            audio = CodecFactory.Instance.GetCodec(settings.NotificationSoundPath)
+                                .ToSampleSource()
+                                .ToMono()
+                                .ToWaveSource();
+                        }
+                        player.Volume = (float)SettingsService.Settings.NotificationSoundVolume;
 
                         // 强制修改音频设置
-                        double lastVolume=-1;
-                        Guid device=Guid.Empty;
+                        double lastVolume = -1;
+                        string device = string.Empty;
                         if (settings.IsNotificationForceAudioSettingEnabled)
                         {
-                            if(settings.IsNotificationForceAudioSettingDeviceEnabled)
+                            if (settings.IsNotificationForceAudioSettingDeviceEnabled)
                             {
-                                //TODO
-                                //player.DeviceNumber = AudioDevicesHelper.GetDeviceNumberById(settings.NotificationForceAudioSettingDevice);
+                                player.Device = AudioDevicesHelper.GetDeviceById(settings.NotificationForceAudioSettingDevice);
                                 if (settings.IsNotificationForceAudioSettingDefaultDeviceEnabled)
                                 {
                                     AudioDevicesHelper.SetDefaultDevice(settings.NotificationForceAudioSettingDevice);
@@ -412,14 +419,13 @@ public partial class MainWindow : Window
                                 device = settings.IsNotificationForceAudioSettingDeviceEnabled
                                     ? settings.NotificationForceAudioSettingDevice
                                     : AudioDevicesHelper.GetDefaultDeviceId();
-                                if(settings.IsNotificationForceAudioSettingVolumeAutoUndoEnabled)
-                                    lastVolume=AudioDevicesHelper.GetDeviceVolume(device);
-                                AudioDevicesHelper.SetDeviceVolume(device,settings.NotificationForceAudioSettingVolume);
+                                if (settings.IsNotificationForceAudioSettingVolumeAutoUndoEnabled)
+                                    lastVolume = AudioDevicesHelper.GetDeviceVolume(device);
+                                AudioDevicesHelper.SetDeviceVolume(device, settings.NotificationForceAudioSettingVolume);
                             }
                         }
 
-
-                        player.Init(volume);
+                        player.Initialize(audio);
                         player.Play();
 
                         await Task.Run(() =>
@@ -427,15 +433,18 @@ public partial class MainWindow : Window
                             while (player.PlaybackState == PlaybackState.Playing)
                             {
                             }
+
                             if (lastVolume != -1)
                             {
-                                if (device == Guid.Empty)
+                                if (device == string.Empty)
                                 {
                                     Logger.LogError(new Exception("不预期的未初始化。"), "无法还原音量。");
                                 }
-                                AudioDevicesHelper.SetDeviceVolume(device,lastVolume);
+
+                                AudioDevicesHelper.SetDeviceVolume(device, lastVolume);
                             }
                         });
+
                     }
                     catch (Exception e)
                     {

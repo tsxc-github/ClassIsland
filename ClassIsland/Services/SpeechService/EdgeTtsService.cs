@@ -6,16 +6,18 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ClassIsland.Core;
 using ClassIsland.Helpers;
 using ClassIsland.Shared.Abstraction.Services;
-
 using Edge_tts_sharp;
 using Edge_tts_sharp.Model;
-
 using Microsoft.Extensions.Logging;
-
-using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
+using CSCore.SoundOut;
+using CSCore;
+using CSCore.Codecs;
+using CSCore.Codecs.WAV;
+using CSCore.SoundIn;
+using CSCore.Streams;
 
 namespace ClassIsland.Services.SpeechService;
 
@@ -37,7 +39,7 @@ public class EdgeTtsService : ISpeechService
 
     private CancellationTokenSource? requestingCancellationTokenSource;
 
-    private WaveOut? CurrentWavePlayer { get; set; }
+    private WasapiOut? CurrentWavePlayer { get; set; }
 
 
     public EdgeTtsService()
@@ -98,7 +100,7 @@ public class EdgeTtsService : ISpeechService
                 },
                 requestingCancellationTokenSource.Token);
         }
-        
+
         if (requestingCancellationTokenSource.IsCancellationRequested)
             return;
         PlayingQueue.Enqueue(new EdgeTtsPlayInfo(cache, new CancellationTokenSource(), task));
@@ -136,23 +138,25 @@ public class EdgeTtsService : ISpeechService
             }
 
             CurrentWavePlayer?.Dispose();
-            var player = CurrentWavePlayer = new WaveOut();
+            var player = CurrentWavePlayer = new WasapiOut();
             try
             {
-                await using var audio = new AudioFileReader(playInfo.FilePath);
-                var volume = new VolumeSampleProvider(audio)
-                {
-                    Volume = (float)SettingsService.Settings.SpeechVolume
-                };
+                var audio = new CSCore.Codecs.MP3.Mp3MediafoundationDecoder(playInfo.FilePath)
+                    .ToSampleSource()
+                    .ToMono()
+                    .ToWaveSource();
+                player.Initialize(audio);
+
+                player.Volume = (float)SettingsService.Settings.SpeechVolume;
+
                 // 强制修改音频设置
-                double lastVolume=-1;
-                Guid device=Guid.Empty;
+                double lastVolume = -1;
+                string device = string.Empty;
                 if (SettingsService.Settings.IsNotificationForceAudioSettingEnabled)
                 {
-                    if(SettingsService.Settings.IsNotificationForceAudioSettingDeviceEnabled)
+                    if (SettingsService.Settings.IsNotificationForceAudioSettingDeviceEnabled)
                     {
-                        //TODO
-                        //player.DeviceNumber = AudioDevicesHelper.GetDeviceNumberById(SettingsService.Settings.NotificationForceAudioSettingDevice);
+                        player.Device = AudioDevicesHelper.GetDeviceById(SettingsService.Settings.NotificationForceAudioSettingDevice);
                         if (SettingsService.Settings.IsNotificationForceAudioSettingDefaultDeviceEnabled)
                         {
                             AudioDevicesHelper.SetDefaultDevice(SettingsService.Settings.NotificationForceAudioSettingDevice);
@@ -164,15 +168,16 @@ public class EdgeTtsService : ISpeechService
                         device = SettingsService.Settings.IsNotificationForceAudioSettingDeviceEnabled
                             ? SettingsService.Settings.NotificationForceAudioSettingDevice
                             : AudioDevicesHelper.GetDefaultDeviceId();
-                        if(SettingsService.Settings.IsNotificationForceAudioSettingVolumeAutoUndoEnabled)
-                            lastVolume=AudioDevicesHelper.GetDeviceVolume(device);
-                        AudioDevicesHelper.SetDeviceVolume(device,SettingsService.Settings.NotificationForceAudioSettingVolume);
+                        if (SettingsService.Settings.IsNotificationForceAudioSettingVolumeAutoUndoEnabled)
+                            lastVolume = AudioDevicesHelper.GetDeviceVolume(device);
+                        AudioDevicesHelper.SetDeviceVolume(device, SettingsService.Settings.NotificationForceAudioSettingVolume);
                     }
                 }
-                player.Init(volume);
+
+
                 Logger.LogDebug("开始播放 {}", playInfo.FilePath);
                 player.Play();
-                player.PlaybackStopped += (sender, args) => playInfo.IsPlayingCompleted = true;
+                player.Stopped += (sender, args) => playInfo.IsPlayingCompleted = true;
 
                 await Task.Run(() =>
                 {
@@ -180,13 +185,15 @@ public class EdgeTtsService : ISpeechService
                            !playInfo.CancellationTokenSource.IsCancellationRequested)
                     {
                     }
+
                     if (lastVolume != -1)
                     {
-                        if (device == Guid.Empty)
+                        if (device == string.Empty)
                         {
                             Logger.LogError(new Exception("不预期的未初始化。"), "无法还原音量。");
                         }
-                        AudioDevicesHelper.SetDeviceVolume(device,lastVolume);
+
+                        AudioDevicesHelper.SetDeviceVolume(device, lastVolume);
                     }
                 });
                 Logger.LogDebug("结束播放 {}", playInfo.FilePath);

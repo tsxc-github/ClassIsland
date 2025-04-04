@@ -107,7 +107,7 @@ public interface INotificationSettings
     /// <summary>
     /// 在提醒时强制修改音频设置-设备
     /// </summary>
-    public Guid NotificationForceAudioSettingDevice
+    public string NotificationForceAudioSettingDevice
     {
         get;
         set;

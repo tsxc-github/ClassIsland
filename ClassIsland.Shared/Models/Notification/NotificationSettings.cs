@@ -21,7 +21,7 @@ public class NotificationSettings : ObservableRecipient, INotificationSettings
     private bool _isNotificationForceAudioSettingVolumeAutoUndoEnabled = false;
     private bool _isNotificationForceAudioSettingDeviceEnabled = false;
     private bool _isNotificationForceAudioSettingDefaultDeviceEnabled = false;
-    private Guid _notificationForceAudioSettingDevice = Guid.Empty;
+    private string _notificationForceAudioSettingDevice = string.Empty;
 
     /// <summary>
     /// 是否启用提醒
@@ -191,7 +191,7 @@ public class NotificationSettings : ObservableRecipient, INotificationSettings
     /// <summary>
     /// 在提醒时强制修改音频设置-设备
     /// </summary>
-    public Guid NotificationForceAudioSettingDevice
+    public string NotificationForceAudioSettingDevice
     {
         get => _notificationForceAudioSettingDevice;
         set

@@ -167,7 +167,7 @@ public class Settings : ObservableRecipient, ILessonControlSettings, INotificati
     private bool _isNotificationForceAudioSettingVolumeAutoUndoEnabled = false;
     private bool _isNotificationForceAudioSettingDeviceEnabled = false;
     private bool _isNotificationForceAudioSettingDefaultDeviceEnabled = false;
-    private Guid _notificationForceAudioSettingDevice = Guid.Empty;
+    private string _notificationForceAudioSettingDevice = string.Empty;
     private string _updateArtifactHash = "";
     private ObservableCollection<string> _excludedWeatherAlerts = new();
     private string _currentComponentConfig = "Default";
@@ -1471,7 +1471,7 @@ public class Settings : ObservableRecipient, ILessonControlSettings, INotificati
         }
     }
 
-    public Guid NotificationForceAudioSettingDevice
+    public string NotificationForceAudioSettingDevice
     {
         get => _notificationForceAudioSettingDevice;
         set

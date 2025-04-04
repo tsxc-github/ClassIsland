@@ -15,8 +15,9 @@ using ClassIsland.Shared.Abstraction.Services;
 
 using Microsoft.Extensions.Logging;
 
-using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
+using CSCore;
+using CSCore.CoreAudioAPI;
+using CSCore.SoundOut;
 using PgpCore;
 
 namespace ClassIsland.Services.SpeechService;
@@ -35,7 +36,7 @@ public class GptSoVitsService : ISpeechService
 
     private CancellationTokenSource? requestingCancellationTokenSource;
 
-    private IWavePlayer? CurrentWavePlayer { get; set; }
+    private WasapiOut? CurrentWavePlayer { get; set; }
 
     public GptSoVitsService()
     {
@@ -194,17 +195,52 @@ public class GptSoVitsService : ISpeechService
             }
 
             CurrentWavePlayer?.Dispose();
-            var player = CurrentWavePlayer = new DirectSoundOut();
+            var player = CurrentWavePlayer = new WasapiOut();
             try
             {
-                await using var audio = new AudioFileReader(playInfo.FilePath);
-                var volume = new VolumeSampleProvider(audio)
+                var audio = new CSCore.Codecs.WAV.WaveFileReader(playInfo.FilePath)
+                    .ToSampleSource()
+                    .ToMono()
+                    .ToWaveSource();
+                player.Initialize(audio);
+
+                player.Volume = (float)SettingsService.Settings.SpeechVolume;
+
+                // 强制修改音频设置
+                double lastVolume = -1;
+                string device = string.Empty;
+                if (SettingsService.Settings.IsNotificationForceAudioSettingEnabled)
                 {
-                    Volume = (float)SettingsService.Settings.SpeechVolume
-                };
-                player.Init(volume);
-                Logger.LogDebug("开始播放 {FilePath}", playInfo.FilePath);
+                    if (SettingsService.Settings.IsNotificationForceAudioSettingDeviceEnabled)
+                    {
+                        player.Device = AudioDevicesHelper.GetDeviceById(SettingsService.Settings.NotificationForceAudioSettingDevice);
+                        if (SettingsService.Settings.IsNotificationForceAudioSettingDefaultDeviceEnabled)
+                        {
+                            AudioDevicesHelper.SetDefaultDevice(SettingsService.Settings.NotificationForceAudioSettingDevice);
+                        }
+                    }
+
+                    if (SettingsService.Settings.IsNotificationForceAudioSettingVolumeEnabled)
+                    {
+                        device = SettingsService.Settings.IsNotificationForceAudioSettingDeviceEnabled
+                            ? SettingsService.Settings.NotificationForceAudioSettingDevice
+                            : AudioDevicesHelper.GetDefaultDeviceId();
+                        if (SettingsService.Settings.IsNotificationForceAudioSettingVolumeAutoUndoEnabled)
+                            lastVolume = AudioDevicesHelper.GetDeviceVolume(device);
+                        AudioDevicesHelper.SetDeviceVolume(device, SettingsService.Settings.NotificationForceAudioSettingVolume);
+                    }
+                }
+
+                Logger.LogDebug("开始播放 {}", playInfo.FilePath);
                 player.Play();
+                // await using var audio = new AudioFileReader(playInfo.FilePath);
+                // var volume = new VolumeSampleProvider(audio)
+                // {
+                //     Volume = (float)SettingsService.Settings.SpeechVolume
+                // };
+                // player.Init(volume);
+                // Logger.LogDebug("开始播放 {FilePath}", playInfo.FilePath);
+                // player.Play();
                 playInfo.IsPlayingCompleted = false;
 
                 var playbackTcs = new TaskCompletionSource<bool>();
@@ -214,11 +250,11 @@ public class GptSoVitsService : ISpeechService
                     playbackTcs.SetResult(true);
                 }
 
-                player.PlaybackStopped += PlaybackStoppedHandler;
+                player.Stopped += PlaybackStoppedHandler;
 
                 await playbackTcs.Task;
 
-                player.PlaybackStopped -= PlaybackStoppedHandler;
+                player.Stopped -= PlaybackStoppedHandler;
                 Logger.LogDebug("结束播放 {FilePath}", playInfo.FilePath);
             }
             catch (Exception ex)
